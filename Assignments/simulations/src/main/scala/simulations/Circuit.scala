@@ -59,11 +59,21 @@ abstract class CircuitSimulator extends Simulator {
   //
 
   def orGate(a1: Wire, a2: Wire, output: Wire) {
-    ???
+    def orAction() {
+      val a1Sig = a1.getSignal
+      val a2Sig = a2.getSignal
+      afterDelay(OrGateDelay) { output.setSignal(a1Sig | a2Sig) }
+    }
+    a1 addAction orAction
+    a2 addAction orAction
   }
   
   def orGate2(a1: Wire, a2: Wire, output: Wire) {
-    ???
+    val notA1, notA2, notOutput = new Wire
+    inverter(a1, notA1)
+    inverter(a2, notA2)
+    andGate(notA1, notA2, notOutput)
+    inverter(notOutput, output)
   }
 
   def demux(in: Wire, c: List[Wire], out: List[Wire]) {
