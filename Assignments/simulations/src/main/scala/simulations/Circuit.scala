@@ -76,9 +76,20 @@ abstract class CircuitSimulator extends Simulator {
     inverter(notOutput, output)
   }
 
+//  def demux(in: Wire, c: List[Wire], out: List[Wire]) {
+//    @tailrec 
+//    def iter(half: Int, ctl: List[Wire], ins: List[(Wire, Int)]): Unit = ctl match { 
+//      case ctlIn :: ctlTail => val invCtlIn = new Wire inverter(ctlIn, invCtlIn)
+//    }
+//    
+//    def curCtlIn(idx: Int) = if (idx / half % 2 > 0) ctlIn else invCtlIn ctlTail match {
+//  }
+  
   def demux(in: Wire, c: List[Wire], out: List[Wire]) {
-    ???
-  }
+    if (c.isEmpty) in addAction { () => out.head.setSignal(in.getSignal) }
+    
+    
+  }  
 
 }
 
