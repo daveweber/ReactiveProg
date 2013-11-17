@@ -75,29 +75,20 @@ abstract class CircuitSimulator extends Simulator {
     andGate(notA1, notA2, notOutput)
     inverter(notOutput, output)
   }
-
-//  def demux(in: Wire, c: List[Wire], out: List[Wire]) {
-//    @tailrec 
-//    def iter(half: Int, ctl: List[Wire], ins: List[(Wire, Int)]): Unit = ctl match { 
-//      case ctlIn :: ctlTail => val invCtlIn = new Wire inverter(ctlIn, invCtlIn)
-//    }
-//    
-//    def curCtlIn(idx: Int) = if (idx / half % 2 > 0) ctlIn else invCtlIn ctlTail match {
-//  }
   
   def demux(in: Wire, c: List[Wire], out: List[Wire]) {
-    if (c.isEmpty) in addAction { () => out.head.setSignal(in.getSignal) }
-    else {
-      val out0, out1, not = new Wire
-      inverter(c.head, not)
-      andGate(c.head, in, out1)
-      andGate(not, in, out0)
-      val outs = out.splitAt(out.length / 2)
-      demux(out0, c.tail, outs._1)
-      demux(out1, c.tail, outs._2)      
+    c match {
+      case Nil => andGate(in, in, out(0))
+      case head :: tail => {
+        val out0, out1, not = new Wire
+        andGate(in, head, out0)
+        inverter(head, not)
+        andGate(in, not, out1)
+        val outs = out.length / 2
+        demux(out0, tail, out take outs)
+        demux(out1, tail, out drop outs)      
+      } 
     }
-    
-    
   }  
 
 }
