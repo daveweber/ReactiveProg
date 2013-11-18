@@ -28,7 +28,7 @@ class EpidemySimulator extends Simulator {
     
     val mobilityMode = false
     
-    val choseFewMode = false
+    val chosenFewMode = false
     val vipChance = 0.05 
   }
 
