@@ -24,7 +24,7 @@ class EpidemySimulator extends Simulator {
     val airplaneMode = false
     val airplaneChance = 0.01
 
-    val mobilityMode = false
+    val mobilityMode = true
 
     val chosenFewMode = false
     val vipChance = 0.05
@@ -61,9 +61,8 @@ class EpidemySimulator extends Simulator {
       def infect() {
         val personsInRoom = personsByField.get((row, col))
         if (personsInRoom.isDefined && personsInRoom.get.exists(p => p.infected) && random <= transmissibilityRate) {
-          if(!immune) 
-            infected = true
-            afterDelay(incubationDelay)(sicken)
+          infected = true
+          afterDelay(incubationDelay)(sicken)
         }
       }
 

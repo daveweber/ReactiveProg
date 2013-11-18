@@ -168,7 +168,8 @@ object Circuit extends CircuitSimulator {
 }
 
 object CircuitMain extends App {
-  Circuit.andGateExample
-  Circuit.orGateExample
+//  Circuit.andGateExample
+//  Circuit.orGateExample
+  println("Demux Gate")
   Circuit.demuxExample
 }
