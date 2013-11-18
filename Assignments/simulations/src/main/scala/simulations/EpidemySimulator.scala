@@ -87,7 +87,8 @@ class EpidemySimulator extends Simulator {
 
         }
 
-        afterDelay(randomBelow(5) + 1)(moveAction)
+        val delay = randomBelow(5) + 1
+        afterDelay(if (mobilityMode) (if (sick) delay * 4 else delay * 2) else delay)(moveAction)
       }
 
     }
@@ -121,6 +122,7 @@ class EpidemySimulator extends Simulator {
       afterDelay(incubationDelay)(sicken)
     }
 
-    afterDelay(randomBelow(5) + 1)(moveAction)
+    val delay = randomBelow(5) + 1
+    afterDelay(if (mobilityMode) (if (sick) delay * 4 else delay * 2) else delay)(moveAction)
   }
 }
