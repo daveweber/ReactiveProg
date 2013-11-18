@@ -61,13 +61,14 @@ class EpidemySimulator extends Simulator {
       def infect() {
         val personsInRoom = personsByField.get((row, col))
         if (personsInRoom.isDefined && personsInRoom.get.exists(p => p.infected) && random <= transmissibilityRate) {
-          infected = true
-          afterDelay(incubationDelay)(sicken)
+          if(!immune) 
+            infected = true
+            afterDelay(incubationDelay)(sicken)
         }
       }
 
       if (!dead) {
-        if (random <= prevalenceRate) {
+        if (airplaneMode && random <= airplaneChance) {
           row = randomBelow(roomRows)
           col = randomBelow(roomColumns)
           infect()
