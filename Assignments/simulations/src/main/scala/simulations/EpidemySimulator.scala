@@ -46,9 +46,10 @@ class EpidemySimulator extends Simulator {
   }
 
   class Person(val id: Int) {
-    var infected = id <= (population * prevalenceRate).toInt
+    val initialInfected = (population * prevalenceRate).toInt
+    var infected = id <= initialInfected
     var sick = false
-    var immune = false
+    var immune = id <= (population * vipChance).toInt + initialInfected && id > initialInfected
     var dead = false
 
     // demonstrates random number generation
