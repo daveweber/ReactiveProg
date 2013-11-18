@@ -11,40 +11,42 @@ class EpidemySimulator extends Simulator {
     val roomRows: Int = 8
     val roomColumns: Int = 8
 
-    // to complete: additional parameters of simulation
     // Base rules
     val prevalenceRate = 0.01
     val transmissibilityRate = 0.4
-    val moveDelay = randomBelow(5) + 1
     val incubationDelay = 6
-    val deathDelay = 14
+    val deathDelay = 8
     val deathChance = 0.25
-    val immuneDelay = 16
-    val healthyDelay = 18
+    val immuneDelay = 2
+    val healthyDelay = 2
 
     // Add-ins
     val airplaneMode = false
     val airplaneChance = 0.01
-    
+
     val mobilityMode = false
-    
+
     val chosenFewMode = false
-    val vipChance = 0.05 
+    val vipChance = 0.05
   }
 
   import SimConfig._
 
-  val persons: List[Person] = for {
-    i <- (0 until population).toList
-  } yield {
-    val person = new Person(i)
-    if (i < population * prevalenceRate) person.setInfected
-    person.mode
-    person
+  val persons: List[Person] = for (id <- (1 to population).toList) yield new Person(id)
+
+  def personsByField = persons.groupBy(person => (person.row, person.col))
+
+  def neighbours(row: Int, col: Int) = {
+    val directions = List((1, 0), (-1, 0), (0, 1), (0, -1))
+    for {
+      direction <- directions
+      nRow = (((row + direction._1) % roomRows) + roomRows) % roomRows //to avoid negatives
+      nCol = (((col + direction._2) % roomColumns) + roomColumns) % roomColumns
+    } yield (nRow, nCol)
   }
 
   class Person(val id: Int) {
-    var infected = false
+    var infected = id <= (population * prevalenceRate).toInt
     var sick = false
     var immune = false
     var dead = false
@@ -53,77 +55,71 @@ class EpidemySimulator extends Simulator {
     var row: Int = randomBelow(roomRows)
     var col: Int = randomBelow(roomColumns)
 
-    //
-    // to complete with simulation logic
-    //
-    def setInfected {
-      infected = true
-      afterDelay(incubationDelay)(setSick)
-      afterDelay(deathDelay)(setDead)
-      afterDelay(immuneDelay)(setImmune)
-      afterDelay(healthyDelay)(setHealthy)
-    }
+    def moveAction {
 
-    def setSick = sick = true
-
-    def setDead = if (random < deathChance) dead = true
-
-    def setImmune {
-      if (dead) return
-      sick = false
-      immune = true
-    }
-
-    def setHealthy {
-      if (dead) return
-      immune = false
-      infected = false
-    }
-
-    def mode = afterDelay(moveDelay)(move)
-
-    def move {
-      // Fail fast: can't move if dead
-      if (dead) return
-
-      // Get neighboring rooms and find one without a visibly infectious person 
-      val neighbors = List(
-        ((row - 1 + roomRows) % roomRows, col),
-        ((row + 1) % roomRows, col),
-        (row, (col - 1 + roomColumns) % roomColumns),
-        (row, (col + 1) % roomColumns)
-      )
-
-      // Avoid rooms with sick or dead (visibly infectious) people
-      def notVisiblyInfected(room: (Int, Int)): Boolean = room match {
-        case (x, y) => (persons.find {
-          person => person.row == x && person.col == y && (person.sick || person.dead)
-        }).isEmpty
-      }
-
-      def validRooms = neighbors filter notVisiblyInfected
-
-      // Move only when there's a valid room to go to
-      if (!validRooms.isEmpty) {
-        val destination = validRooms(randomBelow(validRooms.length))
-        destination match {
-          case (x, y) => {
-            row = x
-            col = y
-          }
+      def infect() {
+        val personsInRoom = personsByField.get((row, col))
+        if (personsInRoom.isDefined && personsInRoom.get.exists(p => p.infected) && random <= transmissibilityRate) {
+          infected = true
+          afterDelay(incubationDelay)(sicken)
         }
       }
-      
-      if (!immune && !infected)
-        if (random < transmissibilityRate)
-          if (!(persons.find{person => person.row == row && person.col == col && person.infected}).isEmpty)
-            setInfected
 
-      // Begin countdown for next move
-      mode
-      
+      if (!dead) {
+        if (random <= prevalenceRate) {
+          row = randomBelow(roomRows)
+          col = randomBelow(roomColumns)
+          infect()
+        } else {
+
+          val healthyNeighbours = neighbours(row, col).filter(field => {
+            val persons = personsByField.get(field)
+            !persons.isDefined || !persons.get.exists(p => p.sick || p.dead)
+          })
+
+          if (!healthyNeighbours.isEmpty) {
+            val neighbour = healthyNeighbours(randomBelow(healthyNeighbours.length))
+            row = neighbour._1
+            col = neighbour._2
+            infect()
+          }
+
+        }
+
+        afterDelay(randomBelow(5) + 1)(moveAction)
+      }
+
     }
 
-  }
+    def sicken() {
+      sick = true
+      afterDelay(deathDelay)(kill)
+    }
 
+    def kill() {
+      if (random <= deathChance) dead = true
+      else afterDelay(immuneDelay)(immunize)
+    }
+
+    def immunize() {
+      if (!dead) {
+        sick = false
+        immune = true
+        afterDelay(healthyDelay)(recover)
+      }
+    }
+
+    def recover() {
+      if (!dead) {
+        infected = false
+        immune = false
+      }
+    }
+
+    if (infected) {
+      afterDelay(incubationDelay)(sicken)
+    }
+
+    afterDelay(randomBelow(5) + 1)(moveAction)
+  }
 }

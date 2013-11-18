@@ -54,10 +54,6 @@ abstract class CircuitSimulator extends Simulator {
     a2 addAction andAction
   }
 
-  //
-  // to complete with orGates and demux...
-  //
-
   def orGate(a1: Wire, a2: Wire, output: Wire) {
     def orAction() {
       val a1Sig = a1.getSignal
@@ -114,13 +110,65 @@ object Circuit extends CircuitSimulator {
     in2.setSignal(true)
     run
   }
+  
+  def orGateExample {
+    val in1, in2, out = new Wire
+    orGate(in1, in2, out)
+    probe("in1", in1)
+    probe("in2", in2)
+    probe("out", out)
+    in1.setSignal(false)
+    in2.setSignal(false)
+    run
 
-  //
-  // to complete with orGateExample and demuxExample...
-  //
+    in1.setSignal(true)
+    run
+
+    in2.setSignal(true)
+    run
+
+    in1.setSignal(false)
+    run
+
+    in2.setSignal(false)
+    run
+  }
+
+
+  def demuxExample {
+    val in, in1, in2, out1, out2, out3, out4 = new Wire
+
+    probe("in", in)
+
+    probe("in1", in1)
+    probe("in2", in2)
+
+    probe("out1", out1)
+    probe("out2", out2)
+    probe("out3", out3)
+    probe("out4", out4)
+
+    demux(in, List(in1, in2), List(out1, out2, out3, out4))
+
+    run
+
+    in.setSignal(true)
+    run
+
+    in2.setSignal(true)
+    run
+
+    in1.setSignal(true)
+    run
+
+    in2.setSignal(false)
+    run
+  }
+  
 }
 
 object CircuitMain extends App {
-  // You can write tests either here, or better in the test class CircuitSuite.
   Circuit.andGateExample
+  Circuit.orGateExample
+  Circuit.demuxExample
 }
