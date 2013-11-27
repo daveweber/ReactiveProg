@@ -73,9 +73,14 @@ package object nodescala {
       readLine(message)
     }
 
-    /** Creates a cancellable context for an execution and runs it.
+    /**
+     * Creates a cancellable context for an execution and runs it.
      */
-    def run()(f: CancellationToken => Future[Unit]): Subscription = ???
+    def run()(f: CancellationToken => Future[Unit]): Subscription = {
+      val cts = CancellationTokenSource()
+      f(cts.cancellationToken)
+      cts
+    }
 
   }
 
