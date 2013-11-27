@@ -106,7 +106,7 @@ package object nodescala {
     def continueWith[S](cont: Future[T] => S): Future[S] = {
       val p = Promise[S]()
       f onComplete {
-        case Success(value) => p.complete(Try(cont(Future(value))))
+        case Success(value) => p.complete(Try(cont(f)))
         case Failure(exception) => p.failure(exception)
       }
       p.future
