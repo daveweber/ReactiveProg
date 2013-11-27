@@ -20,7 +20,8 @@ trait NodeScala {
 
   def createListener(relativePath: String): Listener
 
-  /** Uses the response object to respond to the write the response back.
+  /**
+   * Uses the response object to respond to the write the response back.
    *  The response should be written back in parts, and the method should
    *  occasionally check that server was not stopped, otherwise a very long
    *  response may take very long to finish.
@@ -29,7 +30,12 @@ trait NodeScala {
    *  @param token        the cancellation token for
    *  @param body         the response to write back
    */
-  private def respond(exchange: Exchange, token: CancellationToken, response: Response): Unit = ???
+  private def respond(exchange: Exchange, token: CancellationToken, response: Response): Unit = {
+    while (response.hasNext && token.nonCancelled) {
+      exchange.write(response.next)
+    }
+    exchange.close
+  }
 
   /** A server:
    *  1) creates and starts an http listener
@@ -41,7 +47,21 @@ trait NodeScala {
    *  @param handler        a function mapping a request to a response
    *  @return               a subscription that can stop the server and all its asynchronous operations *entirely*.
    */
-  def start(relativePath: String)(handler: Request => Response): Subscription = ???
+  def start(relativePath: String)(handler: Request => Response): Subscription = {
+    val listener = createListener(relativePath)
+    val listenerSub = listener.start
+    val requestSub = Future.run() { cancelToken =>
+      Future {
+        while (cancelToken.nonCancelled) {
+          val f = listener.nextRequest
+          f onComplete {
+            case anyValue => respond(anyValue.get._2, cancelToken, handler(anyValue.get._1))      
+          }
+        }
+      }
+    }
+    Subscription.apply(listenerSub, requestSub)    
+  }
 
 }
 
@@ -101,7 +121,8 @@ object NodeScala {
 
     def removeContext(): Unit
 
-    /** Given a relative path:
+    /**
+     * Given a relative path:
      *  1) constructs an uncompleted promise
      *  2) installs an asynchronous request handler using `createContext`
      *     that completes the promise with a request when it arrives
@@ -111,7 +132,12 @@ object NodeScala {
      *  @param relativePath    the relative path on which we want to listen to requests
      *  @return                the promise holding the pair of a request and an exchange object
      */
-    def nextRequest(): Future[(Request, Exchange)] = ???
+    def nextRequest(): Future[(Request, Exchange)] = {
+      val p = Promise[(Request, Exchange)]()
+      createContext(ex => { p.success((ex.request, ex)) })
+      p.future onComplete { ex => removeContext }
+      p.future
+    }
   }
 
   object Listener {
