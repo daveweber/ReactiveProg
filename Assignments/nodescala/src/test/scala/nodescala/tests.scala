@@ -63,9 +63,26 @@ class NodeScalaSuite extends FunSuite {
     }
   }
   
-  test("A Future should be return all results") {
+  test("A Future should return all results") {
     val all = Future.all(List(Future { 2 }, Future { 1 }))
-    assert(Await.result(all, 0 nanos) == List(1, 2))
+    val result = Await.result(all, 1 second)
+    assert(result == List(1, 2) || result == List(2, 1))
+  } 
+
+  test("A Future should complete after 3s when using a delay of 1s") {
+    val delay = Future.delay(1 second)
+    Await.result(delay, 3 second)
+    assert(true)
+  }
+  
+  test("A Future should not complete after 1s when using a delay of 3s") {
+    val delay = Future.delay(3 second)
+    try {
+      Await.result(delay, 1 second)
+      assert(false)
+    } catch {
+      case e: TimeoutException => // ok!
+    }
   }
 
   test("CancellationTokenSource should allow stopping the computation") {
