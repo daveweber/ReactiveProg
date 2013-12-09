@@ -95,7 +95,8 @@ object WikipediaSuggest extends SimpleSwingApplication with ConcreteSwingApi wit
     }
 
     // TO IMPLEMENT
-    val selections: Observable[String] = (button clicks) filter (_ => !suggestionList.selection.items.isEmpty) map (_ => suggestionList.selection.items(0))
+    val selections: Observable[String] = 
+      (button clicks) filter (_ => !suggestionList.selection.items.isEmpty) map (_ => suggestionList.selection.items(0))
 
     // TO IMPLEMENT
     val pages: Observable[Try[String]] = selections concatRecovered wikiPageResponseStream
